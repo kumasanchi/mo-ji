@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>音声認識</title>
-</head>
 <body>
-    <button id="start">音声認識を開始</button>
-    <button id="stop">音声認識を停止</button>
-    <textarea id="result"></textarea>
-    <ul id="log"></ul>
-    <script>
-        const startButton = document.querySelector('#start');
-        const stopButton = document.querySelector('#stop');
-        const resultArea = document.querySelector('#result');
-        const logArea = document.querySelector('#log');
 
-        // SpeechRecognition インスタンスを生成
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+<h1>音声認識</h1>
 
-        recognition.lang = 'ja-JP';  // 言語を日本語に設定
-        recognition.interimResults = true;  // 結果がまだ確定しない状態でも取得する
-        recognition.maxAlternatives = 1;  // 候補の数
+<select id="language">
+  <option value="ja-JP">日本語</option>
+  <option value="en-US">英語</option>
+</select>
 
-        recognition.onresult = (event) => {
-            let interimTranscript = '';  // 中間結果
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    const li = document.createElement('li');
-                    li.textContent = transcript;
-                    logArea.appendChild(li);  // ログに追加
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
-            resultArea.value = interimTranscript;  // 中間結果を表示
+<button onclick="startDictation()">音声認識開始</button>
+<button onclick="download()">ダウンロード</button>
+
+<p id="status" style="color: red;">停止中</p>
+<p id="transcript"></p>
+
+<script>
+function startDictation() {
+    var language = document.getElementById('language').value;
+    
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+
+        var recognition = new webkitSpeechRecognition();
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.lang = language;
+        recognition.start();
+        
+        document.getElementById('status').innerHTML = "起動中";
+        document.getElementById('status').style.color = "green";
+
+        recognition.onresult = function(e) {
+            document.getElementById('transcript').innerHTML = e.results[0][0].transcript;
+            recognition.stop();
+            document.getElementById('status').innerHTML = "停止中";
+            document.getElementById('status').style.color = "red";
         };
 
-        // 音声認識を開始・停止するイベントを設定
-        startButton.onclick = () => { recognition.start(); };
-        stopButton.onclick = () => { recognition.stop(); };
-    </script>
+        recognition.onerror = function(e) {
+            recognition.stop();
+            document.getElementById('status').innerHTML = "停止中";
+            document.getElementById('status').style.color = "red";
+        }
+
+    }
+}
+
+function download() {
+    var text = document.getElementById('transcript').innerHTML;
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', 'output.txt');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+</script>
+
 </body>
 </html>
