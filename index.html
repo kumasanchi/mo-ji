@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>音声認識</title>
+</head>
+<body>
+    <button id="start">音声認識を開始</button>
+    <button id="stop">音声認識を停止</button>
+    <textarea id="result"></textarea>
+    <ul id="log"></ul>
+    <script>
+        const startButton = document.querySelector('#start');
+        const stopButton = document.querySelector('#stop');
+        const resultArea = document.querySelector('#result');
+        const logArea = document.querySelector('#log');
+
+        // SpeechRecognition インスタンスを生成
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+
+        recognition.lang = 'ja-JP';  // 言語を日本語に設定
+        recognition.interimResults = true;  // 結果がまだ確定しない状態でも取得する
+        recognition.maxAlternatives = 1;  // 候補の数
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';  // 中間結果
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    const li = document.createElement('li');
+                    li.textContent = transcript;
+                    logArea.appendChild(li);  // ログに追加
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            resultArea.value = interimTranscript;  // 中間結果を表示
+        };
+
+        // 音声認識を開始・停止するイベントを設定
+        startButton.onclick = () => { recognition.start(); };
+        stopButton.onclick = () => { recognition.stop(); };
+    </script>
+</body>
+</html>
